@@ -1,0 +1,18 @@
+# Build artifacts
+*.deb
+resolve_temp_*/
+
+# Installer payloads
+DaVinci_Resolve*_Linux.run
+
+# Cache directories
+.cache/
+.cache*/
+
+# Logs and misc
+*.log
+*.tmp
+
+# OS metadata
+.DS_Store
+Thumbs.db
