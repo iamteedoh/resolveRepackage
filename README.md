@@ -82,7 +82,7 @@ flowchart TD
     D --> E[Prepare Cache & Resolve Dependencies]
     E --> F[Prompt: Uninstall existing Resolve?]
     F --> G[Prompt: Auto-install after build?]
-    G --> H[Headless Extraction (nonroot mode)]
+    G --> H[Headless Extraction]
     H --> I[Detect Resolve Version]
     I --> J[Stage Debian Tree under /opt/resolve]
     J --> K[Gather Bundled Libraries]
