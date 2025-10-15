@@ -77,25 +77,24 @@ The script stores dependency downloads in `${CACHE_ROOT:-$HOME/.cache/resolve-re
 ```mermaid
 flowchart TD
     A[Start Script] --> B[Parse CLI Flags]
-    B --> C[Check Root Privileges]
+    B --> C[Check Root Privileges & Tools]
     C --> D[Locate .run Installer]
-    D --> E[Verify Required Tools]
-    E --> F[Prepare Cache & Downloads]
-    F --> G[Prompt: Uninstall existing Resolve?]
-    G --> H[Prompt: Auto-install new package?]
-    H --> I[Extract .run Archive]
-    I --> J[Detect Resolve Version]
-    J --> K[Prepare Debian Tree]
-    K --> L[Copy Resolve Files into opt/resolve]
-    L --> M[Collect Bundled Libraries]
-    M --> N[Bundle Dependency Libraries]
-    N --> O[Write Debian Metadata & postinst]
-    O --> P[Build .deb with fakeroot dpkg-deb]
-    P --> Q{Auto-install?}
-    Q -- Yes --> R[apt install ./<deb>]
-    Q -- No --> S[Print Manual Install Instructions]
-    R --> T[Cleanup & Finish]
-    S --> T[Cleanup & Finish]
+    D --> E[Prepare Cache & Resolve Dependencies]
+    E --> F[Prompt: Uninstall existing Resolve?]
+    F --> G[Prompt: Auto-install after build?]
+    G --> H[Headless Extraction (--nonroot)]
+    H --> I[Detect Resolve Version]
+    I --> J[Stage Debian Tree under /opt/resolve]
+    J --> K[Gather Bundled Libraries]
+    K --> L[Bundle External Packages]
+    L --> M[Disable Conflicting GLib/Kerberos Libs]
+    M --> N[Create Wrapper + postinst Metadata]
+    N --> O[Build .deb with fakeroot dpkg-deb]
+    O --> P{Auto-install?}
+    P -- Yes --> Q[apt install ./<deb>]
+    P -- No --> R[Print Manual Install Instructions]
+    Q --> S[Cleanup Temporary Files]
+    R --> S[Cleanup Temporary Files]
 ```
 
 ## Generated Files
