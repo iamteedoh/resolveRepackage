@@ -1,6 +1,7 @@
 # Build artifacts
 *.deb
 resolve_temp_*/
+test_extract/
 
 # Installer payloads
 DaVinci_Resolve*_Linux.run

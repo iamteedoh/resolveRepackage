@@ -40,7 +40,7 @@ cd resolveRepackage
 # place the .run installer beside the script
 cp ~/Downloads/DaVinci_Resolve_*_Linux.run .
 
-# ensure the script is executable
+# ensure the script is executable; run this if it's not already executable
 chmod +x repackageResolve.sh
 ```
 
@@ -111,6 +111,8 @@ flowchart TD
 | Bundled library warnings | Dependency `.deb` files missing in cache. | Check network connectivity; rerun with `--clean-cache` to refresh. |
 | `Package file '<deb>' not found` | Build skipped because existing package matched; or build failed earlier. | Run with `--force` to rebuild; inspect prior log output for errors. |
 | Installation fails with dependency complaints | Host machine lacks required base packages (`libgl1`, `libx11-6`, etc.). | Install missing packages via `sudo apt install <package>`. |
+| `Package 'libasound2' has no installation candidate` | Newer Ubuntu/Pop!
+ _OS_ releases virtualize `libasound2` (e.g., `libasound2t64`). | Pick the T64 variant when prompted, or rerun with the updated script which automatically selects the available variant. |
 
 ## Frequently Asked Questions
 **Q: Can I run the script without `sudo`?**  
