@@ -97,6 +97,21 @@ flowchart TD
     R --> S[Cleanup Temporary Files]
 ```
 
+Detailed map (each item links to the implementation):
+1. Start Script → [parse_args](./repackageResolve.sh#L421) → [check_root](./repackageResolve.sh#L119) → [check_installer](./repackageResolve.sh#L126) → [check_tools](./repackageResolve.sh#L140)
+2. Prepare dependencies → [ensure_bundled_packages](./repackageResolve.sh#L157)
+3. Prompt for uninstall → [prompt_uninstall_and_repackage](./repackageResolve.sh#L211)
+4. Prompt for auto-install → [prompt_install_after_repackage](./repackageResolve.sh#L235)
+5. Headless extraction & version detection → [create_deb_package](./repackageResolve.sh#L246)
+6. Stage Debian tree & copy assets → [create_deb_package](./repackageResolve.sh#L296)
+7. Gather bundled libs → [create_deb_package](./repackageResolve.sh#L323)
+8. Bundle external packages → [bundle_system_libraries](./repackageResolve.sh#L186)
+9. Disable conflicting GLib/Kerberos libs → [disable_conflicting_libs](./repackageResolve.sh#L208)
+10. Create wrapper & postinst metadata → [create_deb_package](./repackageResolve.sh#L334)
+11. Build `.deb` → [create_deb_package](./repackageResolve.sh#L366)
+12. Optional auto-install → [install_package](./repackageResolve.sh#L381)
+13. Cleanup → [cleanup](./repackageResolve.sh#L396)
+
 ## Generated Files
 - `davinci-resolve-studio_<version>_amd64.deb` — the Debian package you can install or distribute.
 - `opt/resolve` inside the `.deb` contains Resolve binaries plus bundled libraries under `opt/resolve/libs`.
