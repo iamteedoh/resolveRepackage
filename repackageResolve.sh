@@ -60,6 +60,7 @@ DOWNLOAD_DIR="${CACHE_ROOT}/archives"
 trap cleanup EXIT
 
 # --- Helper Functions ---
+# TRAIL:helper_functions
 start_spinner() {
     local msg="$1"
     local spin='|/-\'
@@ -108,6 +109,7 @@ print_step() {
 }
 
 # --- Utility & Validation Functions ---
+# TRAIL:utility_functions
 check_root() {
     if [ "${EUID:-$(id -u)}" -ne 0 ]; then
         print_error "This script needs to be run with sudo privileges. Please run as: sudo $0"
@@ -147,6 +149,7 @@ check_tools() {
 }
 
 ensure_bundled_packages() {
+# TRAIL:ensure_bundled_packages
     print_step "Preparing dependency bundle"
     print_info "Ensuring required shared libraries are available for bundling..."
     apt-get update
@@ -176,6 +179,7 @@ ensure_bundled_packages() {
 }
 
 bundle_system_libraries() {
+# TRAIL:bundle_system_libraries
     local libs_dir="$1"
     local bundle_tmp
     bundle_tmp=$(mktemp -d -p "$TEMP_DIR" bundle_pkg_XXXX)
@@ -201,6 +205,7 @@ bundle_system_libraries() {
 }
 
 disable_conflicting_libs() {
+# TRAIL:disable_conflicting_libs
     local libs_dir="$1"
     for pattern in "${CONFLICTING_LIB_PATTERNS[@]}"; do
         while IFS= read -r -d '' lib_file; do
@@ -213,6 +218,7 @@ disable_conflicting_libs() {
 }
 
 # --- Main Logic Functions ---
+# TRAIL:main_logic
 prompt_uninstall_and_repackage() {
     local choice
     printf '\n'
@@ -233,6 +239,7 @@ prompt_uninstall_and_repackage() {
 }
 
 prompt_install_after_repackage() {
+# TRAIL:prompt_install
     local choice
     printf '\n'
     read -r -p $'\e[36m[Q2]\e[0m Automatically install the new package and its dependencies? (y/n): ' choice
@@ -244,6 +251,7 @@ prompt_install_after_repackage() {
 }
 
 create_deb_package() {
+# TRAIL:create_deb_package
     print_step "Building package contents"
     print_info "Starting repackaging process..."
 
@@ -379,6 +387,7 @@ EOF
 }
 
 install_package() {
+# TRAIL:install_package
     print_step "Installing package"
     print_info "Installing DaVinci Resolve package..."
 
@@ -394,6 +403,7 @@ install_package() {
 }
 
 cleanup() {
+# TRAIL:cleanup
     if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
         print_info "Cleaning up temporary files..."
         rm -rf "$TEMP_DIR"
@@ -401,6 +411,7 @@ cleanup() {
 }
 
 # --- CLI & Main Execution ---
+# TRAIL:cli_and_main
 show_help() {
     cat <<'EOF'
 DaVinci Resolve Repackager
@@ -419,6 +430,7 @@ EOF
 }
 
 parse_args() {
+# TRAIL:parse_args
     while [ $# -gt 0 ]; do
         case "$1" in
             -f|--force)
@@ -450,6 +462,7 @@ parse_args() {
 }
 
 main() {
+# TRAIL:main
     parse_args "$@"
 
     check_root
