@@ -37,6 +37,16 @@ BUNDLED_PACKAGE_GROUPS=(
     "ocl-icd-libopencl1"
     "libopengl0 libopengl0t64"
 )
+CONFLICTING_LIB_PATTERNS=(
+    "libglib-2.0.so"
+    "libgobject-2.0.so"
+    "libgmodule-2.0.so"
+    "libgthread-2.0.so"
+    "libgio-2.0.so"
+    "libk5crypto.so.3"
+    "libkrb5.so.3"
+    "libgssapi_krb5.so.2"
+)
 RESOLVED_PACKAGES=()
 DEB_FILE=""
 PKG_VERSION=""
@@ -190,6 +200,18 @@ bundle_system_libraries() {
     done
 }
 
+disable_conflicting_libs() {
+    local libs_dir="$1"
+    for pattern in "${CONFLICTING_LIB_PATTERNS[@]}"; do
+        while IFS= read -r -d '' lib_file; do
+            local backup="${lib_file}.disabled"
+            if [ ! -f "$backup" ]; then
+                mv "$lib_file" "$backup"
+            fi
+        done < <(find "$libs_dir" -maxdepth 1 -type f -name "$pattern" -print0)
+    done
+}
+
 # --- Main Logic Functions ---
 prompt_uninstall_and_repackage() {
     local choice
@@ -307,6 +329,7 @@ EOF
     done < <(find "$app_dir" -type f -name 'lib*.so*' ! -path "$libs_dir/*" -print0)
 
     bundle_system_libraries "$libs_dir"
+    disable_conflicting_libs "$libs_dir"
 
     # Create shim wrapper to ensure Resolve uses bundled libraries without polluting system
     mv "$app_dir/bin/resolve" "$app_dir/bin/resolve.bin"
