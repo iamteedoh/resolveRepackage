@@ -16,11 +16,12 @@
 - [License](#license)
 
 ## Overview
-`repackageResolve.sh` converts the official DaVinci Resolve GNU/Linux `.run` installer into a Debian-compatible `.deb` package. The script vendors Resolve’s required legacy libraries inside the package so you can install the editor on modern Debian/Ubuntu systems without downgrading core system libraries.
+`repackageResolve.sh` converts the official DaVinci Resolve GNU/Linux `.run` installer into a Debian-compatible `.deb` package. The script vendors Resolve’s required legacy libraries inside the package so you can install the editor on modern Debian/Ubuntu systems without downgrading core system libraries while keeping those legacy libraries isolated from the rest of the system.
 
 ## Key Features
 - **Idempotent builds:** Skips rebuilding when a matching `.deb` already exists (override with `--force`).
-- **Dependency bundling:** Downloads Resolve’s shared-library dependencies and packages them into `opt/resolve/libs` to avoid touching host libraries.
+- **Dependency bundling:** Downloads Resolve’s shared-library dependencies and packages them into `opt/resolve/libs` to avoid touching host libraries. Libraries that conflict with the system (GLib, Kerberos/OpenSSL stack, etc.) are automatically disabled so they cannot leak into the rest of the system.
+- **Self-contained launcher:** Automatically swaps the upstream `resolve` binary for a small wrapper that injects `LD_LIBRARY_PATH=/opt/resolve/libs` only for Resolve itself.
 - **Interactive safeguards:** Warns about existing Resolve installations, offers to uninstall, and prompts before installing the freshly built `.deb`.
 - **Verbose progress:** Color-coded logging with numbered steps so you can follow along.
 - **Cache-aware:** Reuses downloaded dependency `.deb` files between runs (with an option to clear the cache).
@@ -64,10 +65,10 @@ The script stores dependency downloads in `${CACHE_ROOT:-$HOME/.cache/resolve-re
 2. **Prep dependencies:** Downloads required shared libraries as `.deb` archives (download-only) for bundling.
 3. **User prompts:** Offers to uninstall any prior Resolve installation and asks whether to auto-install the new `.deb` when finished.
 4. **Builds the package:**
-   - Extracts the `.run` installer to a temp directory.
-   - Detects the Resolve version and creates a Debian staging tree.
+   - Extracts the `.run` installer headlessly with the official installer in `--nonroot` mode.
+   - Detects the Resolve version from the bundled documentation and creates a Debian staging tree.
    - Copies Resolve binaries into `opt/resolve` and gathers bundled libs into `opt/resolve/libs` (including the downloaded dependency libraries).
-   - Generates the Debian control metadata and `postinst` script.
+   - Generates the Debian control metadata and `postinst` script, replaces the upstream `resolve` binary with a wrapper, and disables bundled libraries known to clash with the host (GLib, Kerberos/OpenSSL stack, etc.).
    - Builds the `.deb` with `fakeroot dpkg-deb` and emits `davinci-resolve-studio_<version>_amd64.deb`.
 5. **Optional install:** If you consent (or pass `--force-install`), installs the package via `apt`.
 6. **Cleanup:** Temporary work directories are removed automatically via a trap handler.
@@ -113,6 +114,19 @@ flowchart TD
 | Installation fails with dependency complaints | Host machine lacks required base packages (`libgl1`, `libx11-6`, etc.). | Install missing packages via `sudo apt install <package>`. |
 | `Package 'libasound2' has no installation candidate` | Newer Ubuntu/Pop!
  _OS_ releases virtualize `libasound2` (e.g., `libasound2t64`). | Pick the T64 variant when prompted, or rerun with the updated script which automatically selects the available variant. |
+| Resolve or system binaries fail with `undefined symbol` errors referencing GLib/OpenSSL/Kerberos | Older bundled libraries from Resolve were on the dynamic loader path. | The script now disables those copies automatically. If you had a previous install, rename any `libglib*`, `libgio*`, `libgobject*`, `libgmodule*`, `libgthread*`, `libkrb5*`, `libk5crypto*`, `libgssapi_krb5*` under `/opt/resolve/libs` to `*.disabled` and reinstall with the latest script. |
+
+## Upgrade Workflow
+Upgrading to a new Resolve release is the same as the initial setup:
+
+```bash
+cd ~/git/resolveRepackage
+git pull
+cp ~/Downloads/DaVinci_Resolve_*.run .
+sudo ./repackageResolve.sh --force --force-install
+```
+
+`--force` ensures the `.deb` is rebuilt even if the version number hasn’t changed yet, and `--force-install` skips the prompt and replaces the existing `davinci-resolve-studio` package in one go. The script automatically handles the wrapper and conflicting libraries on every run, so no manual cleanup is required between upgrades.
 
 ## Frequently Asked Questions
 **Q: Can I run the script without `sudo`?**  
