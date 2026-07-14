@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "bump-minor-pre-major": true,
+  "bootstrap-sha": "0fb70724810a2569cec3db4d509762f22b92093b",
+  "packages": {
+    ".": {
+      "package-name": "resolveRepackage"
+    }
+  }
+}

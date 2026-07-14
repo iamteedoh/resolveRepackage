@@ -1,0 +1,77 @@
+name: Bug report
+description: Report a reproducible resolveRepackage problem
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Do not paste tokens, passwords,
+        license keys, or private host details.
+
+  - type: input
+    id: version
+    attributes:
+      label: resolveRepackage version
+      description: Provide a release tag or commit SHA.
+      placeholder: v0.1.0 or 0123456
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Repackaging script (repackageResolve.sh)
+        - Generated .deb package
+        - Installed Resolve launcher or bundled libraries
+        - CI or release automation
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Distribution
+      options:
+        - Pop!_OS
+        - Ubuntu
+        - Debian
+        - Other Debian derivative
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the distribution release, DaVinci Resolve .run installer version, and whether you use the Studio or free edition. Redact private details.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the observed and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+        3. Expected ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant redacted output
+      description: Remove secrets and private details before pasting.
+      render: shell
