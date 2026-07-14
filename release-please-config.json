@@ -7,5 +7,6 @@
     ".": {
       "package-name": "resolveRepackage"
     }
-  }
+  },
+  "include-component-in-tag": false
 }
