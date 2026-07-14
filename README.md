@@ -13,6 +13,7 @@
 - [Troubleshooting](#troubleshooting)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Contributing](#contributing)
+- [Security](#security)
 - [License](#license)
 
 ## Overview
@@ -28,7 +29,7 @@
 
 ## Prerequisites
 - **Operating system:** Debian, Ubuntu, Pop!_OS, or derivative with `apt`.
-- **Required packages:** `xar`, `fakeroot`, `xz-utils`, `tar`, `dpkg-deb`. Install them via `sudo apt install xar fakeroot xz-utils tar dpkg-deb`.
+- **Required packages:** `fakeroot`, `xz-utils`, `tar`, and `dpkg` (which provides `dpkg-deb`). Install them via `sudo apt install fakeroot xz-utils tar dpkg`.
 - **Privileges:** Run the script with `sudo` (it configures `/opt`, `/usr`, and `apt`).
 - **Installer:** Place the official DaVinci Resolve `.run` file (e.g., `DaVinci_Resolve_18.6.2_Linux.run`) in the same directory as the script.
 
@@ -98,18 +99,18 @@ flowchart TD
 ```
 
 Detailed map (each item links to the implementation):
-- Start Script → [parse_args](./repackageResolve.sh#L421-L450) → [check_root](./repackageResolve.sh#L111-L115) → [check_installer](./repackageResolve.sh#L117-L130) → [check_tools](./repackageResolve.sh#L132-L147)
-- Prepare dependencies → [ensure_bundled_packages](./repackageResolve.sh#L149-L176)
-- Prompt for uninstall → [prompt_uninstall_and_repackage](./repackageResolve.sh#L216-L233)
-- Prompt for auto-install → [prompt_install_after_repackage](./repackageResolve.sh#L235-L244)
-- Headless extraction & version detection → [create_deb_package](./repackageResolve.sh#L246-L295)
-- Stage Debian tree & copy assets → [create_deb_package](./repackageResolve.sh#L296-L333)
-- Bundle external packages → [bundle_system_libraries](./repackageResolve.sh#L178-L200)
-- Disable conflicting GLib/Kerberos libs → [disable_conflicting_libs](./repackageResolve.sh#L203-L213)
-- Create wrapper & postinst metadata → [create_deb_package](./repackageResolve.sh#L334-L364)
-- Build `.deb` → [create_deb_package](./repackageResolve.sh#L366-L379)
-- Optional auto-install → [install_package](./repackageResolve.sh#L381-L394)
-- Cleanup → [cleanup](./repackageResolve.sh#L396-L400)
+- Start Script → [parse_args](./repackageResolve.sh#L433-L463) → [check_root](./repackageResolve.sh#L114-L118) → [check_installer](./repackageResolve.sh#L120-L133) → [check_tools](./repackageResolve.sh#L135-L150)
+- Prepare dependencies → [ensure_bundled_packages](./repackageResolve.sh#L152-L180)
+- Prompt for uninstall → [prompt_uninstall_and_repackage](./repackageResolve.sh#L223-L240)
+- Prompt for auto-install → [prompt_install_after_repackage](./repackageResolve.sh#L242-L252)
+- Headless extraction & version detection → [create_deb_package](./repackageResolve.sh#L254-L303)
+- Stage Debian tree & copy assets → [create_deb_package](./repackageResolve.sh#L305-L341)
+- Bundle external packages → [bundle_system_libraries](./repackageResolve.sh#L182-L206)
+- Disable conflicting GLib/Kerberos libs → [disable_conflicting_libs](./repackageResolve.sh#L208-L219)
+- Create wrapper & postinst metadata → [create_deb_package](./repackageResolve.sh#L343-L374)
+- Build `.deb` → [create_deb_package](./repackageResolve.sh#L375-L387)
+- Optional auto-install → [install_package](./repackageResolve.sh#L390-L404)
+- Cleanup → [cleanup](./repackageResolve.sh#L406-L412)
 
 ## Generated Files
 - `davinci-resolve-studio_<version>_amd64.deb` — the Debian package you can install or distribute.
@@ -120,7 +121,7 @@ Detailed map (each item links to the implementation):
 | Issue | Possible Cause | Suggested Fix |
 |-------|----------------|---------------|
 | `No DaVinci Resolve installer (.run) found` | Installer not present in script directory. | Place the `.run` file alongside `repackageResolve.sh` and re-run. |
-| `Required tool '<tool>' is not installed` | Missing prerequisite packages. | Install via `sudo apt install xar fakeroot xz-utils tar dpkg-deb`. |
+| `Required tool '<tool>' is not installed` | Missing prerequisite packages. | Install via `sudo apt install fakeroot xz-utils tar dpkg`. |
 | Extraction failure (`Failed to extract the installer archive`) | Corrupted `.run` download or insufficient disk space. | Re-download the installer; ensure adequate disk space. |
 | Bundled library warnings | Dependency `.deb` files missing in cache. | Check network connectivity; rerun with `--clean-cache` to refresh. |
 | `Package file '<deb>' not found` | Build skipped because existing package matched; or build failed earlier. | Run with `--force` to rebuild; inspect prior log output for errors. |
@@ -133,7 +134,7 @@ Detailed map (each item links to the implementation):
 Upgrading to a new Resolve release is the same as the initial setup:
 
 ```bash
-cd ~/git/resolveRepackage
+cd /path/to/resolveRepackage
 git pull
 cp ~/Downloads/DaVinci_Resolve_*.run .
 sudo ./repackageResolve.sh --force --force-install
@@ -160,7 +161,14 @@ Run with the `--clean-cache` flag or manually delete `${CACHE_ROOT:-$HOME/.cache
 3. Run the script end-to-end to ensure the workflow still succeeds.
 4. Submit a pull request describing your updates.
 
-Bug reports and enhancement ideas are welcome via GitHub issues.
+Bug reports and enhancement ideas are welcome via GitHub issues. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the validation suite (ShellCheck,
+`bash -n`, gitleaks) and the full pull request process.
+
+## Security
+Please report vulnerabilities privately through GitHub's
+[Report a vulnerability](https://github.com/iamteedoh/resolveRepackage/security/advisories/new)
+form rather than public issues. See [SECURITY.md](SECURITY.md) for details.
 
 ## License
 This project is licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for the full text.
