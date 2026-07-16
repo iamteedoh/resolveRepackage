@@ -25,6 +25,10 @@
 ## Overview
 `repackageResolve.sh` converts the official DaVinci Resolve GNU/Linux `.run` installer into a Debian-compatible `.deb` package. The script vendors Resolve’s required legacy libraries inside the package so you can install the editor on modern Debian/Ubuntu systems without downgrading core system libraries while keeping those legacy libraries isolated from the rest of the system.
 
+<p align="center">
+  <img src="assets/resolveRepackage_appThumbnail.png" alt="resolveRepackage repackaging DaVinci Resolve into a .deb" width="820">
+</p>
+
 ## Key Features
 - **Idempotent builds:** Skips rebuilding when a matching `.deb` already exists (override with `--force`).
 - **Dependency bundling:** Downloads Resolve’s shared-library dependencies and packages them into `opt/resolve/libs` to avoid touching host libraries. Libraries that conflict with the system (GLib, Kerberos/OpenSSL stack, etc.) are automatically disabled so they cannot leak into the rest of the system.
