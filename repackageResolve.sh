@@ -11,7 +11,7 @@
 # conflicts with modern system libraries.
 #
 # Author: Tito Valentín
-# Version: 0.3.0
+# Version: 0.4.0 # x-release-please-version
 # License: GNU General Public License v3.0 (see LICENSE)
 # ==============================================================================
 

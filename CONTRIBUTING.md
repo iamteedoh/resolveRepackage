@@ -71,7 +71,10 @@ recover.
 
 The PR title becomes the squash commit subject and drives release-please:
 `fix:` creates a patch release, `feat:` creates a minor release, and a `!` or
-`BREAKING CHANGE:` footer creates a breaking release.
+`BREAKING CHANGE:` footer creates a breaking release. The release PR updates
+`CHANGELOG.md`, `.release-please-manifest.json` and the `# Version:` line in
+`repackageResolve.sh` (marked `x-release-please-version`); never edit the
+version by hand.
 
 ## License
 
