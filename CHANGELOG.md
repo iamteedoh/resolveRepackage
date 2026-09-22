@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/iamteedoh/resolveRepackage/compare/v0.2.0...v0.3.0) (2026-09-22)
+
+
+### Features
+
+* fetch the latest Resolve, split into multi-part packages, add editions and updates ([#6](https://github.com/iamteedoh/resolveRepackage/issues/6)) ([629588d](https://github.com/iamteedoh/resolveRepackage/commit/629588d9b0fb7138d7a6282901219ba440a8c837))
+
+
+### Bug Fixes
+
+* skip dependency downloads when the package set already exists ([#8](https://github.com/iamteedoh/resolveRepackage/issues/8)) ([e1d5804](https://github.com/iamteedoh/resolveRepackage/commit/e1d5804943055608876a6d783ecd2e5e4eefe966))
+
 ## [0.2.0](https://github.com/iamteedoh/resolveRepackage/compare/v0.1.0...v0.2.0) (2026-07-16)
 
 
