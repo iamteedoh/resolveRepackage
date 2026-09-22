@@ -649,6 +649,10 @@ check_tools() {
 ensure_bundled_packages() {
 # TRAIL:ensure_bundled_packages
     print_step "Preparing dependency bundle"
+    if _packages_prebuilt; then
+        print_info "Existing packages for $PKG_VERSION will be reused; no dependencies to download."
+        return 0
+    fi
     print_info "Ensuring required shared libraries are available for bundling..."
     if [ "${EUID:-$(id -u)}" -eq 0 ]; then
         apt-get update -qq
@@ -859,20 +863,26 @@ _existing_package_set() {
     done
 }
 
+# _packages_prebuilt -> returns 0 when a complete package set already exists
+# for the version in the installer's name, without extracting anything. Sets
+# PKG_VERSION and DEB_FILES accordingly.
+_packages_prebuilt() {
+    local name_version
+    name_version=$(_installer_version "$RESOLVE_INSTALLER_RUN")
+    [ -n "$name_version" ] || return 1
+    PKG_VERSION="${name_version}-1"
+    _existing_package_set
+}
+
 create_deb_package() {
 # TRAIL:create_deb_package
     print_step "Building package contents"
 
     # The installer name carries the version; when packages for it already
     # exist there is no need to extract 10+ GB again.
-    local name_version
-    name_version=$(_installer_version "$RESOLVE_INSTALLER_RUN")
-    if [ -n "$name_version" ]; then
-        PKG_VERSION="${name_version}-1"
-        if _existing_package_set; then
-            print_info "Existing packages for $PKG_VERSION found. Skipping rebuild (use --force to rebuild)."
-            return 0
-        fi
+    if _packages_prebuilt; then
+        print_info "Existing packages for $PKG_VERSION found. Skipping rebuild (use --force to rebuild)."
+        return 0
     fi
     print_info "Starting repackaging process..."
 
