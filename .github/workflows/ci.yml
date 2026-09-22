@@ -35,6 +35,20 @@ jobs:
             bash -n "$file"
           done < <(git ls-files '*.sh')
 
+      # release-please's generic updater only touches lines carrying the
+      # x-release-please-version annotation. Without this check the header
+      # could lose the marker, or be edited by hand, and quietly freeze.
+      - name: Script version header is owned by release-please
+        run: |
+          manifest=$(jq -r '."."' .release-please-manifest.json)
+          header=$(sed -nE 's/^# Version: ([0-9]+\.[0-9]+\.[0-9]+) # x-release-please-version$/\1/p' repackageResolve.sh)
+          test -n "$header" || { echo "repackageResolve.sh: '# Version: X.Y.Z # x-release-please-version' line missing"; exit 1; }
+          test "$header" = "$manifest" || { echo "repackageResolve.sh says $header, manifest says $manifest"; exit 1; }
+          jq -e '.packages["."]["extra-files"] | index("repackageResolve.sh")' release-please-config.json >/dev/null \
+            || { echo "release-please-config.json: repackageResolve.sh missing from extra-files"; exit 1; }
+          reported=$(./repackageResolve.sh --version)
+          test "$reported" = "resolveRepackage $manifest" || { echo "--version printed '$reported'"; exit 1; }
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
