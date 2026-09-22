@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/iamteedoh/resolveRepackage/compare/v0.3.0...v0.4.0) (2026-09-22)
+
+
+### Features
+
+* offer to delete the installer and package files after installing ([#10](https://github.com/iamteedoh/resolveRepackage/issues/10)) ([8bf24bf](https://github.com/iamteedoh/resolveRepackage/commit/8bf24bf4b32907122c3eba1d750caa70d5973156))
+
 ## [0.3.0](https://github.com/iamteedoh/resolveRepackage/compare/v0.2.0...v0.3.0) (2026-09-22)
 
 
