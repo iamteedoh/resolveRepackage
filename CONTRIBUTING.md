@@ -15,10 +15,12 @@ validation, and the pull request process.
 - Bash 5 or newer
 - ShellCheck
 - gitleaks 8.30.1 or newer
-- A Debian, Ubuntu, or Pop!_OS machine (or VM) with `fakeroot`, `xz-utils`,
-  `tar`, and `dpkg` only when exercising the repackaging script end-to-end
+- A Debian, Ubuntu, or Pop!_OS machine (or VM) with `xz-utils`, `tar`,
+  `dpkg`, `curl`, `jq` and `unzip` only when exercising the repackaging script
+  end-to-end (the script installs missing ones itself when run as root)
 - An official DaVinci Resolve `.run` installer only when exercising the
-  repackaging script end-to-end
+  repackaging script end-to-end (the script downloads one unless you pass
+  `--no-download`)
 
 ## Set up from a clean clone
 
@@ -41,9 +43,13 @@ bash -n repackageResolve.sh
 gitleaks git . --config .gitleaks.toml --redact --no-banner
 ```
 
-When changing repackaging behavior, run the script end-to-end on a Debian
-derivative (ideally a VM or container you can throw away) and confirm the
-generated `.deb` installs and Resolve launches. The script runs as root and
+When changing repackaging behavior, run `./repackageResolve.sh --build-only`
+first (no root needed) to confirm the package set builds, then run the script
+end-to-end on a Debian derivative (ideally a VM or container you can throw
+away) and confirm the generated packages install and Resolve launches. Test
+both editions when the download or packaging code changes
+(`--edition studio` and `--edition free`), and test the upgrade path with
+`--update` from an older installed package set. The script runs as root and
 modifies `/opt` and `/usr/bin`, so do not test it on a machine you cannot
 recover.
 
