@@ -55,9 +55,9 @@ recover.
 
 ## Project layout
 
-- `repackageResolve.sh` — the entire tool: prerequisite checks, dependency
+- `repackageResolve.sh`: the entire tool, prerequisite checks, dependency
   bundling, `.run` extraction, Debian packaging, and optional installation
-- `.github/workflows/` — source validation and source-only release automation
+- `.github/workflows/`: source validation and source-only release automation
 
 ## Pull request process
 
