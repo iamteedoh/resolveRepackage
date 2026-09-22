@@ -1269,7 +1269,7 @@ main() {
         printf '    %ssudo apt install %s%s\n' "${C_BOLD}${C_CYAN}" "$(printf './%s ' "${DEB_FILES[@]}")" "$C_RESET"
     fi
 
-    print_done "All done — enjoy DaVinci Resolve!"
+    print_done "All done. Enjoy DaVinci Resolve!"
 }
 
 main "$@"
