@@ -41,13 +41,14 @@
 - **Self-contained launcher:** Automatically swaps the upstream `resolve` binary for a small wrapper that injects `LD_LIBRARY_PATH=/opt/resolve/libs` only for Resolve itself.
 - **No repeated work:** Skips the download when the installer is current and the build when matching `.deb` files already exist (override with `--force`).
 - **Safeguards:** Detects a Resolve installed by Blackmagic's own installer, offers to uninstall it, and asks before installing. `--yes` answers every prompt for unattended runs.
+- **Cleans up after itself:** Once Resolve is installed, the `.run` installer and the `.deb` files (about 20 GB for Studio) are offered for deletion; `--update` and `--yes` delete them without asking, `--keep-files` keeps them.
 - **Clear progress:** Color-coded output with numbered steps.
 
 ## Prerequisites
 - **Operating system:** Debian, Ubuntu, Pop!_OS, or derivative with `apt`.
 - **Required packages:** `xz-utils`, `tar`, and `dpkg` (which provides `dpkg-deb`), plus `curl`, `jq`, and `unzip` for the automatic download. The script installs any that are missing.
 - **Privileges:** Run the script with `sudo` to install (it configures `/opt`, `/usr`, and `apt`). `--check`, `--download-only` and `--build-only` work without it.
-- **Disk space:** About 45 GB free next to the script while it runs for Studio: the download (~10 GB), the extracted installer (~15 GB) and the packages (~10 GB). The free edition is roughly half that. Only the `.run` file and the `.deb` files remain afterwards.
+- **Disk space:** About 45 GB free next to the script while it runs for Studio: the download (~10 GB), the extracted installer (~15 GB) and the packages (~10 GB). The free edition is roughly half that. After the install the script offers to delete the `.run` and `.deb` files, so nothing large remains.
 - **Installer:** None needed; the latest stable release is downloaded for you. To use a specific version instead, place its `.run` file (for example `DaVinci_Resolve_Studio_20.2.1_Linux.run`) beside the script and pass `--no-download`.
 - **License:** DaVinci Resolve Studio still needs your own activation key or dongle; this tool only fetches and repackages the official installer.
 - **Free edition registration:** Blackmagic only hands out the free edition after its registration form (name, email, address) is filled in, exactly as on their website; Studio can be downloaded without it. If you pick the free edition, the script asks for those details once, sends them only to `blackmagicdesign.com`, and keeps them in `${CONFIG_ROOT:-$HOME/.config/resolve-repackage}/registration.json` (mode `600`) so updates run unattended. Delete that file to be asked again.
@@ -82,6 +83,7 @@ sudo ./repackageResolve.sh [OPTIONS]
 | `--build-only` | Download and build the `.deb` files but do not install them. Does not need `sudo`. |
 | `--no-download` | Never contact Blackmagic Design; use the `.run` file in the current directory. |
 | `--clean-cache` | Clear cached dependency archives before bundling. |
+| `--keep-files` | Keep the `.run` installer and the `.deb` files after installing. Without it the script asks whether to delete them; `--update` and `--yes` delete them without asking. |
 | `-h`, `--help` | Show usage information and exit. |
 
 The script stores dependency downloads in `CACHE_ROOT` (`/var/cache/resolve-repackage` when run as root, `$HOME/.cache/resolve-repackage` otherwise) so subsequent runs are faster. Use `--clean-cache` if the cache becomes stale or corrupted.
@@ -100,7 +102,7 @@ The script stores dependency downloads in `CACHE_ROOT` (`/var/cache/resolve-repa
    - Builds each package with `dpkg-deb` (zstd compression when available).
 6. **Existing install check:** If Resolve was installed by Blackmagic's installer rather than by this tool, offers to run its uninstaller first. A package installed by this tool is simply upgraded.
 7. **Install:** Asks for confirmation (skipped with `--yes`, `--force` or `--force-install`) and installs the whole set via `apt`.
-8. **Cleanup:** The temporary work tree (`resolve_temp_*` next to the script) is removed automatically, even when the script fails.
+8. **Cleanup:** Offers to delete the installer and package files for the installed edition, including any from older releases (`--keep-files` skips this). The temporary work tree (`resolve_temp_*` next to the script) is always removed, even when the script fails.
 
 ## Workflow Diagram
 ```mermaid
@@ -134,23 +136,24 @@ flowchart TD
 ```
 
 Detailed map (each item links to the implementation):
-- Pick edition → [select_edition](./repackageResolve.sh#L342-L402)
-- Start Script → [parse_args](./repackageResolve.sh#L1123-L1189) → [main](./repackageResolve.sh#L1211-L1263) → [check_root](./repackageResolve.sh#L286-L290) → [check_tools](./repackageResolve.sh#L620-L647)
-- Fetch installer / up-to-date check → [acquire_installer](./repackageResolve.sh#L564-L618) → [fetch_latest_release](./repackageResolve.sh#L433-L448) → [find_installed_version](./repackageResolve.sh#L421-L429) → [download_installer](./repackageResolve.sh#L505-L559) → [ensure_registration](./repackageResolve.sh#L466-L500) (free edition only)
-- Prepare dependencies → [ensure_bundled_packages](./repackageResolve.sh#L649-L687)
-- Headless extraction & version detection → [create_deb_package](./repackageResolve.sh#L862-L1051)
-- Bundle external packages → [bundle_system_libraries](./repackageResolve.sh#L689-L715)
-- Disable conflicting GLib/Kerberos libs → [disable_conflicting_libs](./repackageResolve.sh#L727-L751)
-- Split files into packages → [pack_tree](./repackageResolve.sh#L815-L841)
-- Package metadata → [_write_control](./repackageResolve.sh#L789-L810)
-- Existing install check → [handle_existing_install](./repackageResolve.sh#L758-L786)
-- Install → [install_package](./repackageResolve.sh#L1053-L1073)
-- Version check only (`--check`) → [check_for_updates](./repackageResolve.sh#L1191-L1209)
-- Cleanup → [cleanup](./repackageResolve.sh#L1075-L1081)
+- Pick edition → [select_edition](./repackageResolve.sh#L345-L405)
+- Start Script → [parse_args](./repackageResolve.sh#L1175-L1244) → [main](./repackageResolve.sh#L1266-L1319) → [check_root](./repackageResolve.sh#L287-L291) → [check_tools](./repackageResolve.sh#L623-L650)
+- Fetch installer / up-to-date check → [acquire_installer](./repackageResolve.sh#L567-L621) → [fetch_latest_release](./repackageResolve.sh#L436-L451) → [find_installed_version](./repackageResolve.sh#L424-L432) → [download_installer](./repackageResolve.sh#L508-L562) → [ensure_registration](./repackageResolve.sh#L469-L503) (free edition only)
+- Prepare dependencies → [ensure_bundled_packages](./repackageResolve.sh#L652-L694)
+- Headless extraction & version detection → [create_deb_package](./repackageResolve.sh#L880-L1064)
+- Bundle external packages → [bundle_system_libraries](./repackageResolve.sh#L696-L722)
+- Disable conflicting GLib/Kerberos libs → [disable_conflicting_libs](./repackageResolve.sh#L734-L758)
+- Split files into packages → [pack_tree](./repackageResolve.sh#L822-L848)
+- Package metadata → [_write_control](./repackageResolve.sh#L796-L817)
+- Existing install check → [handle_existing_install](./repackageResolve.sh#L765-L793)
+- Install → [install_package](./repackageResolve.sh#L1066-L1086)
+- Version check only (`--check`) → [check_for_updates](./repackageResolve.sh#L1246-L1264)
+- Delete installer and packages → [remove_build_artifacts](./repackageResolve.sh#L1091-L1123)
+- Cleanup → [cleanup](./repackageResolve.sh#L1125-L1131)
 
 ## Generated Files
-- `davinci-resolve-studio_<version>_amd64.deb` plus `davinci-resolve-studio-data-<N>_<version>_amd64.deb` (or `davinci-resolve_...` / `davinci-resolve-data-<N>_...` for the free edition): the Debian package set. Install all of them together (`sudo apt install ./davinci-resolve*_<version>_amd64.deb`); they depend on each other at the same version.
-- `DaVinci_Resolve_*_Linux.run`: the downloaded installer, kept beside the script so later runs skip the download.
+- `davinci-resolve-studio_<version>_amd64.deb` plus `davinci-resolve-studio-data-<N>_<version>_amd64.deb` (or `davinci-resolve_...` / `davinci-resolve-data-<N>_...` for the free edition): the Debian package set. Install all of them together (`sudo apt install ./davinci-resolve*_<version>_amd64.deb`); they depend on each other at the same version. Deleted after a successful install unless you keep them.
+- `DaVinci_Resolve_*_Linux.run`: the downloaded installer. Deleted after a successful install unless you keep them; while it is there, later runs skip the download.
 - `/opt/resolve` after installation contains Resolve plus bundled libraries under `/opt/resolve/libs`.
 - Cache directory (`/var/cache/resolve-repackage` as root, `$HOME/.cache/resolve-repackage` otherwise) stores downloaded dependency `.deb` archives for reuse, plus any partially downloaded installer.
 
@@ -192,7 +195,7 @@ To only find out whether an update exists (no `sudo` required):
 ./repackageResolve.sh --check
 ```
 
-`--update` never prompts, so it is safe to put in a cron job or an alias. Old `.deb` files from earlier releases can be deleted whenever you like; the installed copy lives in `/opt/resolve`.
+`--update` never prompts, so it is safe to put in a cron job or an alias. It also deletes the downloaded installer and the package files once the upgrade is in, so each release does not leave 20 GB behind; add `--keep-files` if you want them.
 
 To switch editions, run `sudo ./repackageResolve.sh --edition free` (or `studio`); `apt` replaces the other edition. To remove Resolve entirely: `sudo apt remove 'davinci-resolve*'`.
 

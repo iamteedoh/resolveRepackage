@@ -87,6 +87,7 @@ DOWNLOAD_ONLY=false
 BUILD_ONLY=false
 CHECK_ONLY=false
 ASSUME_YES=false
+KEEP_FILES=false
 STEP_COUNTER=0
 TOTAL_STEPS=5
 # apt downloads run as the _apt user, which cannot read /root, so root uses a
@@ -289,15 +290,17 @@ check_root() {
     fi
 }
 
-# confirm QUESTION -> asks a yes/no question (default no). --yes answers yes.
+# confirm QUESTION [DEFAULT] -> asks a yes/no question. DEFAULT is "n" (the
+# default) or "y" and applies to an empty answer. --yes answers yes.
 confirm() {
-    local prompt choice
+    local prompt choice default="${2:-n}" hint='[y/N]'
     if [ "$ASSUME_YES" = true ]; then return 0; fi
+    if [ "$default" = y ]; then hint='[Y/n]'; fi
     printf '\n'
-    printf -v prompt '  %s%s%s %s %s[y/N]%s ' \
-        "${C_BOLD}${C_MAGENTA}" "$GLYPH_ASK" "$C_RESET" "$1" "$C_DIM" "$C_RESET"
+    printf -v prompt '  %s%s%s %s %s%s%s ' \
+        "${C_BOLD}${C_MAGENTA}" "$GLYPH_ASK" "$C_RESET" "$1" "$C_DIM" "$hint" "$C_RESET"
     read -r -p "$prompt" choice
-    [[ "${choice}" =~ ^[Yy]$ ]]
+    [[ "${choice:-$default}" =~ ^[Yy]$ ]]
 }
 
 # _chown_to_invoker PATH... -> hands files created under sudo back to the user.
@@ -1082,6 +1085,43 @@ install_package() {
     print_info "You can now launch it from your application menu."
 }
 
+# remove_build_artifacts -> once Resolve is installed, the installer and the
+# package files for that edition (this version and any older ones lying
+# around) only take up space: 20 GB for Studio. Offer to delete them.
+remove_build_artifacts() {
+# TRAIL:remove_build_artifacts
+    if [ "$KEEP_FILES" = true ]; then
+        return 0
+    fi
+    local files=() f total_kb=0
+    if [ "$EDITION" = studio ]; then
+        files=(DaVinci_Resolve_Studio_*_Linux.run)
+    else
+        files=(DaVinci_Resolve_[0-9]*_Linux.run)
+    fi
+    files+=("${PACKAGE_NAME}_"*_amd64.deb "${PACKAGE_NAME}-data-"*_amd64.deb)
+    if [ ${#files[@]} -eq 0 ]; then
+        return 0
+    fi
+    for f in "${files[@]}"; do
+        total_kb=$((total_kb + $(du -k --apparent-size "$f" | cut -f1)))
+    done
+    local total_gb
+    total_gb=$(awk -v k="$total_kb" 'BEGIN { printf "%.1f", k / 1048576 }')
+
+    printf '\n'
+    print_info "Resolve is installed; these files are no longer needed ($total_gb GB):"
+    for f in "${files[@]}"; do
+        printf '      %s%s%s\n' "$C_DIM" "$f" "$C_RESET"
+    done
+    if confirm "Delete them? (pass --keep-files to keep them)" y; then
+        rm -f -- "${files[@]}"
+        print_success "Deleted $total_gb GB of installer and package files."
+    else
+        print_info "Keeping them. Delete them by hand whenever you like."
+    fi
+}
+
 cleanup() {
 # TRAIL:cleanup
     if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
@@ -1119,6 +1159,8 @@ Options:
                         them (does not need sudo)
   --no-download         Never contact Blackmagic; use the .run in the current directory
   --clean-cache         Clear cached dependency archives before bundling
+  --keep-files          Keep the .run installer and .deb files after installing
+                        (by default you are asked; --update and --yes delete them)
   -h, --help            Show this help message
 
 Environment variables:
@@ -1175,6 +1217,9 @@ parse_args() {
                 ;;
             --clean-cache)
                 CLEAN_CACHE=true
+                ;;
+            --keep-files)
+                KEEP_FILES=true
                 ;;
             -h|--help)
                 show_help
@@ -1264,6 +1309,7 @@ main() {
     handle_existing_install
     if [ "$FORCE_INSTALL" = true ] || confirm "Install DaVinci Resolve $PKG_VERSION now?"; then
         install_package
+        remove_build_artifacts
     else
         print_info "Repackaging complete. To install, run:"
         printf '    %ssudo apt install %s%s\n' "${C_BOLD}${C_CYAN}" "$(printf './%s ' "${DEB_FILES[@]}")" "$C_RESET"
