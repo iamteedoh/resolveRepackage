@@ -108,31 +108,35 @@ The script stores dependency downloads in `CACHE_ROOT` (`/var/cache/resolve-repa
 ## Workflow Diagram
 ```mermaid
 flowchart TD
-    A[Start Script] --> B[Parse CLI Flags]
-    B --> B1[Pick edition: installed / local .run / prompt]
-    B1 --> C[Check Root Privileges & Tools]
-    C --> D[Query Blackmagic for latest release]
-    D --> D1{Installed Resolve already latest?}
-    D1 -- Yes --> Z[Exit: up to date]
-    D1 -- No --> D2{Local .run up to date?}
-    D2 -- Yes --> E[Prepare Cache & Resolve Dependencies]
-    D2 -- No --> D3[Download latest installer]
+    A["Start Script"] --> B["Parse CLI Flags"]
+    B --> B1["Pick edition: --edition / installed package / local .run / prompt"]
+    B1 --> C["Check Root Privileges, install missing tools"]
+    C --> D["Query Blackmagic for latest release"]
+    D --> D1{"Installed Resolve already latest?"}
+    D1 -- Yes --> Z["Exit: up to date"]
+    D1 -- No --> D2{"Local .run up to date?"}
+    D2 -- No --> D3["Download latest installer, resume if interrupted"]
     D3 --> E
-    E --> H[Headless Extraction]
-    H --> I[Detect Resolve Version]
-    I --> I1{Packages for version exist?}
-    I1 -- Yes --> P
-    I1 -- No --> K[Bundle External Libraries]
-    K --> M[Disable Conflicting GLib/Kerberos Libs]
-    M --> N[Create Wrapper + Split into Packages]
-    N --> O[Build .deb set with dpkg-deb]
-    O --> P{Blackmagic-installed Resolve present?}
-    P -- Yes --> P1[Prompt: run official uninstaller]
+    D2 -- Yes --> E{"Packages for this version already built?"}
+    E -- Yes --> P
+    E -- No --> F["Download dependency libraries with apt"]
+    F --> H["Headless Extraction"]
+    H --> I["Detect Resolve Version"]
+    I --> K["Bundle libraries into opt/resolve/libs"]
+    K --> M["Disable bundled GLib/Kerberos when host copy is newer"]
+    M --> N["Create wrapper, split files into main + data-N packages"]
+    N --> O["Build .deb set with dpkg-deb"]
+    O --> P{"Blackmagic-installed Resolve present?"}
+    P -- Yes --> P1["Prompt: run official uninstaller"]
     P -- No --> Q
-    P1 --> Q{Install now?}
-    Q -- Yes --> R[apt install ./*.deb]
-    Q -- No --> S2[Print Manual Install Instructions]
-    R --> T[Cleanup Temporary Files]
+    P1 --> Q{"Install now? auto-yes with --update / --yes"}
+    Q -- No --> S2["Print Manual Install Instructions"]
+    Q -- Yes --> R["apt install the package set"]
+    R --> R1["postinst: Blackmagic post_install.sh, runtime dirs, /usr/bin/resolve"]
+    R1 --> U{"Delete .run and .deb files? auto-yes with --update / --yes, skipped by --keep-files"}
+    U -- Yes --> U1["Delete installer and package files"]
+    U -- No --> T
+    U1 --> T["Cleanup Temporary Files"]
     S2 --> T
 ```
 
