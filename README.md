@@ -108,35 +108,58 @@ The script stores dependency downloads in `CACHE_ROOT` (`/var/cache/resolve-repa
 ## Workflow Diagram
 ```mermaid
 flowchart TD
-    A["Start Script"] --> B["Parse CLI Flags"]
-    B --> B1["Pick edition: --edition / installed package / local .run / prompt"]
-    B1 --> C["Check Root Privileges, install missing tools"]
-    C --> D["Query Blackmagic for latest release"]
-    D --> D1{"Installed Resolve already latest?"}
-    D1 -- Yes --> Z["Exit: up to date"]
-    D1 -- No --> D2{"Local .run up to date?"}
-    D2 -- No --> D3["Download latest installer, resume if interrupted"]
+    classDef start fill:#1f2937,stroke:#111827,color:#f9fafb,stroke-width:2px
+    classDef decision fill:#fde68a,stroke:#b45309,color:#1f2937
+    classDef network fill:#bfdbfe,stroke:#1d4ed8,color:#1e3a8a
+    classDef build fill:#ddd6fe,stroke:#6d28d9,color:#2e1065
+    classDef install fill:#bbf7d0,stroke:#15803d,color:#052e16
+    classDef prompt fill:#fed7aa,stroke:#c2410c,color:#431407
+    classDef finish fill:#e5e7eb,stroke:#4b5563,color:#111827,stroke-width:2px
+
+    A(["sudo ./repackageResolve.sh"]):::start --> B["Parse flags"]:::start
+    B --> B1["Pick edition<br/>--edition / installed package / local .run / prompt"]:::prompt
+    B1 --> C["Check root, install missing tools"]:::start
+
+    subgraph FETCH ["1 &nbsp; Fetch the installer"]
+        direction TB
+        D["Ask Blackmagic for the latest release"]:::network
+        D --> D1{"Installed Resolve<br/>already latest?"}:::decision
+        D1 -- No --> D2{"Local .run<br/>up to date?"}:::decision
+        D2 -- No --> D3["Download installer<br/>(resumes if interrupted)"]:::network
+    end
+    C --> D
+    D1 -- Yes --> Z(["Exit: up to date"]):::finish
+
+    subgraph BUILD ["2 &nbsp; Build the package set"]
+        direction TB
+        E{"Packages for this version<br/>already built?"}:::decision
+        E -- No --> F["Download dependency<br/>libraries with apt"]:::network
+        F --> H["Extract the .run headlessly"]:::build
+        H --> I["Detect Resolve version"]:::build
+        I --> K["Bundle libraries into<br/>opt/resolve/libs"]:::build
+        K --> M["Disable bundled GLib / Kerberos<br/>when the host copy is newer"]:::build
+        M --> N["Create wrapper, split into<br/>main + data-N packages"]:::build
+        N --> O["dpkg-deb builds each package"]:::build
+    end
+    D2 -- Yes --> E
     D3 --> E
-    D2 -- Yes --> E{"Packages for this version already built?"}
+
+    subgraph INSTALL ["3 &nbsp; Install"]
+        direction TB
+        P{"Resolve installed by<br/>Blackmagic's installer?"}:::decision
+        P -- Yes --> P1["Prompt: run the<br/>official uninstaller"]:::prompt
+        P1 --> Q
+        P -- No --> Q{"Install now?<br/>auto-yes: --update / --yes"}:::decision
+        Q -- Yes --> R["apt install the package set"]:::install
+        R --> R1["postinst: Blackmagic post_install.sh,<br/>runtime dirs, /usr/bin/resolve"]:::install
+        R1 --> U{"Delete .run and .deb files?<br/>auto-yes: --update / --yes<br/>skipped: --keep-files"}:::decision
+        U -- Yes --> U1["Delete installer and<br/>package files"]:::install
+    end
     E -- Yes --> P
-    E -- No --> F["Download dependency libraries with apt"]
-    F --> H["Headless Extraction"]
-    H --> I["Detect Resolve Version"]
-    I --> K["Bundle libraries into opt/resolve/libs"]
-    K --> M["Disable bundled GLib/Kerberos when host copy is newer"]
-    M --> N["Create wrapper, split files into main + data-N packages"]
-    N --> O["Build .deb set with dpkg-deb"]
-    O --> P{"Blackmagic-installed Resolve present?"}
-    P -- Yes --> P1["Prompt: run official uninstaller"]
-    P -- No --> Q
-    P1 --> Q{"Install now? auto-yes with --update / --yes"}
-    Q -- No --> S2["Print Manual Install Instructions"]
-    Q -- Yes --> R["apt install the package set"]
-    R --> R1["postinst: Blackmagic post_install.sh, runtime dirs, /usr/bin/resolve"]
-    R1 --> U{"Delete .run and .deb files? auto-yes with --update / --yes, skipped by --keep-files"}
-    U -- Yes --> U1["Delete installer and package files"]
+    O --> P
+    Q -- No --> S2["Print manual install command"]:::finish
     U -- No --> T
-    U1 --> T["Cleanup Temporary Files"]
+    U1 --> T(["Remove temporary work tree"]):::finish
     S2 --> T
 ```
 
