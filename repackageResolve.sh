@@ -1159,6 +1159,7 @@ Options:
                         them (does not need sudo)
   --no-download         Never contact Blackmagic; use the .run in the current directory
   --clean-cache         Clear cached dependency archives before bundling
+  --version             Print the script version and exit
   --keep-files          Keep the .run installer and .deb files after installing
                         (by default you are asked; --update and --yes delete them)
   -h, --help            Show this help message
@@ -1223,6 +1224,11 @@ parse_args() {
                 ;;
             -h|--help)
                 show_help
+                exit 0
+                ;;
+            --version)
+                # The header line is maintained by release-please.
+                printf 'resolveRepackage %s\n' "$(sed -nE 's/^# Version: ([0-9.]+).*/\1/p' "$0")"
                 exit 0
                 ;;
             --)

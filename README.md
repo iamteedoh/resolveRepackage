@@ -84,6 +84,7 @@ sudo ./repackageResolve.sh [OPTIONS]
 | `--no-download` | Never contact Blackmagic Design; use the `.run` file in the current directory. |
 | `--clean-cache` | Clear cached dependency archives before bundling. |
 | `--keep-files` | Keep the `.run` installer and the `.deb` files after installing. Without it the script asks whether to delete them; `--update` and `--yes` delete them without asking. |
+| `--version` | Print the script version and exit. |
 | `-h`, `--help` | Show usage information and exit. |
 
 The script stores dependency downloads in `CACHE_ROOT` (`/var/cache/resolve-repackage` when run as root, `$HOME/.cache/resolve-repackage` otherwise) so subsequent runs are faster. Use `--clean-cache` if the cache becomes stale or corrupted.
